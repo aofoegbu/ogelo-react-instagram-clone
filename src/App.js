@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 import Post from "./Components/Post/Post";
-import { db } from "./firebase-config";
+import { auth, db } from "./firebase-config";
 import { onSnapshot, collection } from "firebase/firestore";
 import Box from "@mui/material/Box";
 import Modal from "@mui/material/Modal";
@@ -13,7 +13,7 @@ import {
   signOut,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import ImageUpload from "./Components/Post/ImageUpload";
+import ImageUpload from "./Components/ImageUpload/ImageUpload";
 
 const style = {
   position: "absolute",
@@ -37,16 +37,17 @@ function App() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userData, setUserData] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
+    const unsubscribe = onAuthStateChanged(auth, (userData) => {
+      if (userData) {
         // User is signed in, see docs for a list of available properties
         // https://firebase.google.com/docs/reference/js/firebase.User
         const uid = user.uid;
-        setUserData(user);
+        setUser(userData);
+
         if (user.displayName) {
           // don't update name
         } else {
@@ -59,7 +60,7 @@ function App() {
       } else {
         // User is signed out
         console.log(user);
-        setUserData(null);
+        setUser(null);
         // ...
       }
     });
@@ -68,7 +69,7 @@ function App() {
       // perform some cleanup actions
       unsubscribe();
     };
-  }, [userData, username]);
+  }, [user, username]);
 
   useEffect(() => {
     collection(db, "posts")
@@ -82,18 +83,6 @@ function App() {
         );
       });
   }, []);
-
-  // useEffect(() => {
-  // const unsub = onSnapshot(collection(db, "posts"), (snapshot) => {
-  //   setPosts(
-  //     snapshot.docs.map((doc) => ({
-  //       id: doc.id,
-  //       post: doc.data(),
-  //     }))
-  //   );
-  // });
-  // unsub();
-  // }, []);
 
   const signUp = (event) => {
     event.preventDefault();
@@ -129,70 +118,15 @@ function App() {
       });
   };
 
-  // const [posts, setPosts] = useState([
-  //     {
-  //       username: 'ogelo',
-  //       caption: 'Hi there! We are building React',
-  //       imageUrl: 'images/react1.png'
-  //       alt: 'ogelo'
-  //     },
-  //     {
-  //       username: 'Austine',
-  //       caption: 'Reporting live from this end',
-  //       imageUrl: 'images/puppy.png',
-  //       alt: 'austine'
-  //     },
-  //     {
-  //       username: 'chike',
-  //       caption: 'Yo! Whats up' ,
-  //       imageUrl: 'images/react1.png'
-  //       alt: 'chike'
-  //     }
-  //   ]);
-
-  // useEffect(() => {
-  //   // const q=query(collection(db,'todos'),orderBy('timestamp','desc'));
-  //   onSnapshot(collection(db,'posts'),(snapshot)=>{
-  //   setposts(snapshot.docs.map(doc=>({
-  //   id: doc.id,
-  //   post: doc.data()
-  //   })))
-  //   })
-  //   },[]);
-
-  //
-
-  //   useEffect(() => {
-  //     const colRef = collection(db, "posts")
-  //     //real time update
-  //     onSnapshot(colRef, (snapshot) => {
-  //         snapshot.docs.forEach((doc) => {
-  //             setTestData((prev) => [...prev, doc.data()])
-  //             // console.log("onsnapshot", doc.data());
-  //         })
-  //     })
-  // }, [])
   return (
     <div className="app">
       <Modal open={openSignIn} onClose={() => setOpenSignIn(false)}>
         <Box sx={style}>
-          {/* <Typography id="modal-modal-title" variant="h6" component="h2">
-            Text in a modal
-          </Typography>
-          <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-            Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
-          </Typography> */}
           <form className="app__signup">
             <center>
               <img src="images/instagram1.jpg" alt="Instagram Logo" />
             </center>
 
-            {/* <Input
-              placeholder="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            /> */}
             <Input
               placeholder="email"
               type="text"
@@ -241,7 +175,7 @@ function App() {
       </div>
 
       {user.displayName ? (
-        <ImageUpload username={userData?.displayName} />
+        <ImageUpload username={user?.displayName} />
       ) : (
         <h3>Sorry you need to log in to upload</h3>
       )}
